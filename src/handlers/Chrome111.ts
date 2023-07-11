@@ -364,6 +364,9 @@ export class Chrome111 extends HandlerInterface
 				sendEncodings : encodings
 			});
 		const offer = await this._pc.createOffer();
+		
+		this.setBandwidth(offer.sdp);
+
 		let localSdpObject = sdpTransform.parse(offer.sdp);
 
 		if (!this._transportReady)
@@ -1122,5 +1125,18 @@ export class Chrome111 extends HandlerInterface
 			throw new Error(
 				'method can just be called for handlers with "recv" direction');
 		}
+	}
+
+	private setBandwidth(sdp: string): void
+	{
+		const videoMaxBandwidth = 100000;
+
+		// only video
+		if (sdp.indexOf('m=video') === -1)
+		{
+			return;
+		}
+
+		sdp = sdp.replace(/m=video(.*)\r\n/g, 'm=video$1\r\nb=AS:' + videoMaxBandwidth + '\r\n');
 	}
 }
