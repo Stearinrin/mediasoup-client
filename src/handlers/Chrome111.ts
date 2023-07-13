@@ -384,10 +384,8 @@ export class Chrome111 extends HandlerInterface
 			});
 		const offer = await this._pc.createOffer();
 		
-		this.setBandwidth(offer.sdp);
-
 		let localSdpObject = sdpTransform.parse(offer.sdp);
-
+	
 		if (!this._transportReady)
 		{
 			await this.setupTransport(
@@ -396,11 +394,17 @@ export class Chrome111 extends HandlerInterface
 					localSdpObject
 				});
 		}
-
-		logger.debug(
-			'send() | calling pc.setLocalDescription() [offer:%o]',
-			offer);
-
+		
+		const setLocalDescription = this._pc.setLocalDescription;
+		this._pc.setLocalDescription = (offer: {type: 'offer', sdp: string}) => {
+			offer.sdp = this.setBandwidth(offer.sdp);
+		
+			logger.debug(
+				'send() | calling pc.setLocalDescription() [offer:%o]',
+				offer);
+			
+			return setLocalDescription.call(this._pc, offer);
+		}
 		await this._pc.setLocalDescription(offer);
 
 		// We can now get the transceiver.mid.
@@ -452,10 +456,16 @@ export class Chrome111 extends HandlerInterface
 
 		const answer = { type: 'answer', sdp: this._remoteSdp!.getSdp() };
 
-		logger.debug(
-			'send() | calling pc.setRemoteDescription() [answer:%o]',
-			answer);
-
+		const setRemoteDescription = this._pc.setRemoteDescription;
+		this._pc.setRemoteDescription = (answer: {type: 'answer', sdp: string}) => {
+			answer.sdp = this.setBandwidth(answer.sdp);
+		
+			logger.debug(
+				'send() | calling pc.setRemoteDescription() [answer:%o]',
+				answer);
+			
+			return setRemoteDescription.call(this._pc, answer);
+		}
 		await this._pc.setRemoteDescription(answer);
 
 		// Store in the map.
@@ -839,10 +849,17 @@ export class Chrome111 extends HandlerInterface
 
 		const offer = { type: 'offer', sdp: this._remoteSdp!.getSdp() };
 
-		logger.debug(
-			'receive() | calling pc.setRemoteDescription() [offer:%o]',
-			offer);
+		
+		const setRemoteDescription = this._pc.setRemoteDescription;
+		this._pc.setRemoteDescription = (offer: {type: 'offer', sdp: string}) => {
+			offer.sdp = this.setBandwidth(offer.sdp);
+			
+			logger.debug(
+				'receive() | calling pc.setRemoteDescription() [offer:%o]',
+				offer);
 
+			return setRemoteDescription.call(this._pc, offer);
+		}
 		await this._pc.setRemoteDescription(offer);
 
 		let answer = await this._pc.createAnswer();
@@ -875,10 +892,16 @@ export class Chrome111 extends HandlerInterface
 				});
 		}
 
-		logger.debug(
-			'receive() | calling pc.setLocalDescription() [answer:%o]',
-			answer);
-
+		const setLocalDescription = this._pc.setLocalDescription;
+		this._pc.setLocalDescription = (answer: {type: 'answer', sdp: string}) => {
+			answer.sdp = this.setBandwidth(answer.sdp);
+			
+			logger.debug(
+				'receive() | calling pc.setLocalDescription() [answer:%o]',
+				answer);
+			
+			return setLocalDescription.call(this._pc, answer);
+		}
 		await this._pc.setLocalDescription(answer);
 
 		for (const options of optionsList)
@@ -1176,16 +1199,27 @@ export class Chrome111 extends HandlerInterface
 		}
 	}
 
-	private setBandwidth(sdp: string): void
+	private setBandwidth(sdp: string): string
 	{
 		const videoMaxBandwidth = 100000;
 
 		// only video
 		if (sdp.indexOf('m=video') === -1)
 		{
-			return;
+			logger.debug('No video section found in SDP');
+			return sdp;
 		}
 
-		sdp = sdp.replace(/m=video(.*)\r\n/g, 'm=video$1\r\nb=AS:' + videoMaxBandwidth + '\r\n');
+		// check b= line
+		if (sdp.indexOf('b=AS:') > -1)
+		{
+			logger.debug('Found bandwidth in SDP: %s', sdp.match(/b=AS:(\d+)\r\n/));
+			return sdp;
+		}
+
+		logger.debug('setBandwidth() | calling pc.setRemoteDescription() [video:%s]', videoMaxBandwidth);
+
+		return sdp.replace(/m=video(.*)\r\nc=IN(.*)\r\n/g,
+		 'm=video$1\r\nc=IN$2\r\nb=AS:' + videoMaxBandwidth + '\r\n');
 	}
 }
