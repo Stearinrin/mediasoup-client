@@ -1201,7 +1201,7 @@ export class Chrome111 extends HandlerInterface
 
 	private setBandwidth(sdp: string): string
 	{
-		const videoMaxBandwidth = 100000;
+		const videoMaxBandwidth = 1000000;
 
 		// only video
 		if (sdp.indexOf('m=video') === -1)
