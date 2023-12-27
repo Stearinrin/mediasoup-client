@@ -802,17 +802,33 @@ export function getExtendedRtpCapabilities(
 		switch (remoteExt.direction)
 		{
 			case 'sendrecv':
+			{
 				extendedExt.direction = 'sendrecv';
+
 				break;
+			}
+
 			case 'recvonly':
+			{
 				extendedExt.direction = 'sendonly';
+
 				break;
+			}
+
 			case 'sendonly':
+			{
 				extendedExt.direction = 'recvonly';
+
 				break;
+			}
+
 			case 'inactive':
+			{
 				extendedExt.direction = 'inactive';
+
 				break;
+			}
+
 		}
 
 		extendedRtpCapabilities.headerExtensions.push(extendedExt);
@@ -1277,7 +1293,9 @@ function matchCodecs(
 				try
 				{
 					selectedProfileLevelId =
-						h264.generateProfileLevelIdForAnswer(aCodec.parameters, bCodec.parameters);
+						h264.generateProfileLevelIdStringForAnswer(
+							aCodec.parameters, bCodec.parameters
+						);
 				}
 				catch (error)
 				{
