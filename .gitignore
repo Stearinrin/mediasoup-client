@@ -5,6 +5,7 @@
 ## Others.
 /coverage
 /.cache
+
 /NO_GIT
 *.swp
 *.swo
@@ -15,3 +16,4 @@
 /.idea
 
 .tool-versions
+
