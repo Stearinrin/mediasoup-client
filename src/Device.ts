@@ -11,6 +11,7 @@ import { Chrome74 } from './handlers/Chrome74';
 import { Chrome70 } from './handlers/Chrome70';
 import { Chrome67 } from './handlers/Chrome67';
 import { Chrome55 } from './handlers/Chrome55';
+import { Firefox120 } from './handlers/Firefox120';
 import { Firefox60 } from './handlers/Firefox60';
 import { Safari12 } from './handlers/Safari12';
 import { Safari11 } from './handlers/Safari11';
@@ -29,6 +30,7 @@ export type BuiltinHandlerName =
 	| 'Chrome70'
 	| 'Chrome67'
 	| 'Chrome55'
+	| 'Firefox120'
 	| 'Firefox60'
 	| 'Safari12'
 	| 'Safari11'
@@ -61,7 +63,7 @@ export function detectDevice(): BuiltinHandlerName | undefined {
 
 		if (typeof RTCPeerConnection === 'undefined') {
 			logger.warn(
-				'detectDevice() | unsupported react-native-webrtc without RTCPeerConnection, forgot to call registerGlobals()?',
+				'detectDevice() | unsupported react-native-webrtc without RTCPeerConnection, forgot to call registerGlobals()?'
 			);
 
 			return undefined;
@@ -89,7 +91,7 @@ export function detectDevice(): BuiltinHandlerName | undefined {
 		logger.debug(
 			'detectDevice() | browser detected [ua:%s, parsed:%o]',
 			ua,
-			uaParser.getResult(),
+			uaParser.getResult()
 		);
 
 		const browser = uaParser.getBrowser();
@@ -140,7 +142,9 @@ export function detectDevice(): BuiltinHandlerName | undefined {
 			return 'Chrome55';
 		}
 		// Firefox.
-		else if (isFirefox && !isIOS && browserVersion >= 60) {
+		else if (isFirefox && !isIOS && browserVersion >= 120) {
+			return 'Firefox120';
+		} else if (isFirefox && !isIOS && browserVersion >= 60) {
 			return 'Firefox60';
 		}
 		// Firefox on iOS (so Safari).
@@ -200,7 +204,7 @@ export function detectDevice(): BuiltinHandlerName | undefined {
 			logger.warn(
 				'detectDevice() | browser not supported [name:%s, version:%s]',
 				browserName,
-				browserVersion,
+				browserVersion
 			);
 
 			return undefined;
@@ -249,21 +253,21 @@ export class Device {
 		// Handle deprecated option.
 		if (Handler) {
 			logger.warn(
-				'constructor() | Handler option is DEPRECATED, use handlerName or handlerFactory instead',
+				'constructor() | Handler option is DEPRECATED, use handlerName or handlerFactory instead'
 			);
 
 			if (typeof Handler === 'string') {
 				handlerName = Handler as BuiltinHandlerName;
 			} else {
 				throw new TypeError(
-					'non string Handler option no longer supported, use handlerFactory instead',
+					'non string Handler option no longer supported, use handlerFactory instead'
 				);
 			}
 		}
 
 		if (handlerName && handlerFactory) {
 			throw new TypeError(
-				'just one of handlerName or handlerInterface can be given',
+				'just one of handlerName or handlerInterface can be given'
 			);
 		}
 
@@ -305,6 +309,11 @@ export class Device {
 
 				case 'Chrome55': {
 					this._handlerFactory = Chrome55.createFactory();
+					break;
+				}
+
+				case 'Firefox120': {
+					this._handlerFactory = Firefox120.createFactory();
 					break;
 				}
 
@@ -433,7 +442,7 @@ export class Device {
 
 			logger.debug(
 				'load() | got native RTP capabilities:%o',
-				nativeRtpCapabilities,
+				nativeRtpCapabilities
 			);
 
 			// This may throw.
@@ -442,27 +451,27 @@ export class Device {
 			// Get extended RTP capabilities.
 			this._extendedRtpCapabilities = ortc.getExtendedRtpCapabilities(
 				nativeRtpCapabilities,
-				routerRtpCapabilities,
+				routerRtpCapabilities
 			);
 
 			logger.debug(
 				'load() | got extended RTP capabilities:%o',
-				this._extendedRtpCapabilities,
+				this._extendedRtpCapabilities
 			);
 
 			// Check whether we can produce audio/video.
 			this._canProduceByKind.audio = ortc.canSend(
 				'audio',
-				this._extendedRtpCapabilities,
+				this._extendedRtpCapabilities
 			);
 			this._canProduceByKind.video = ortc.canSend(
 				'video',
-				this._extendedRtpCapabilities,
+				this._extendedRtpCapabilities
 			);
 
 			// Generate our receiving RTP capabilities for receiving media.
 			this._recvRtpCapabilities = ortc.getRecvRtpCapabilities(
-				this._extendedRtpCapabilities,
+				this._extendedRtpCapabilities
 			);
 
 			// This may throw.
@@ -470,7 +479,7 @@ export class Device {
 
 			logger.debug(
 				'load() | got receiving RTP capabilities:%o',
-				this._recvRtpCapabilities,
+				this._recvRtpCapabilities
 			);
 
 			// Generate our SCTP capabilities.
@@ -478,7 +487,7 @@ export class Device {
 
 			logger.debug(
 				'load() | got native SCTP capabilities:%o',
-				this._sctpCapabilities,
+				this._sctpCapabilities
 			);
 
 			// This may throw.
